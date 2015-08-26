@@ -2,9 +2,6 @@ var google = require('googleapis');
 var googleAuth = require('google-auth-library');
 
 var SCOPES = ['https://www.googleapis.com/auth/calendar.readonly'];
-var TOKEN_DIR = (process.env.HOME || process.env.HOMEPATH ||
-    process.env.USERPROFILE) + '/.credentials/';
-var TOKEN_PATH = TOKEN_DIR + 'calendar-api-quickstart.json';
 var GoogleCalendar = {};
 /**
  * Create an OAuth2 client with the given credentials.
@@ -21,12 +18,9 @@ GoogleCalendar.init = function (credentials) {
 }
 
 /**
- * Get and store new token after prompting for user authorization, and then
- * execute the given callback with the authorized OAuth2 client.
+ * Generate a new authentication URL.
  *
  * @param {google.auth.OAuth2} oauth2Client The OAuth2 client to get token for.
- * @param {getEventsCallback} callback The callback to call with the authorized
- *     client.
  */
 GoogleCalendar.getAuthUrl = function (oauth2Client) {
   var authUrl = oauth2Client.generateAuthUrl({
@@ -34,7 +28,6 @@ GoogleCalendar.getAuthUrl = function (oauth2Client) {
     scope: SCOPES
   });
   return authUrl;
-  //console.log('Authorize this app by visiting this url: ', authUrl);
 }
 
 /**
@@ -42,6 +35,7 @@ GoogleCalendar.getAuthUrl = function (oauth2Client) {
  *
  * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
  * @param {String} authorization code
+ * @param {callback} callback function
  */
 GoogleCalendar.generateToken = function (oauth2Client, code, callback) {
   oauth2Client.getToken(code, function(err, token) {
