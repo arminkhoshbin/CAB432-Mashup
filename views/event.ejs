@@ -1,0 +1,143 @@
+	<% include header %>
+		<div id="map"></div>
+		<div class="container">
+			<div class="row">
+				<div class="col-md-12">
+					<div class="event" ng-controller="eventController">
+						<div class="panel panel-default">
+						  <div class="panel-heading"><h3>Event: <%= eventDetail.summary %></h3></div>
+						  <div class="row row-padding">
+						  	<div class="col-md-6">
+						  		<div class="eventDetail"><b>Start:</b> <span id="startTime"><%= eventDetail.start.dateTime %></span><br/></div>
+						  		<div class="eventDetail"><b>End:</b> <span id="endTime"><%= eventDetail.end.dateTime %></span><br/></div>
+						  		<div class="eventDetail"><b>Where:</b> <span id="endTime"><%= eventDetail.location %></span><br/></div>
+						  	</div>
+						  	<div class="col-md-6 weather">
+							  		<canvas id="weather_icon" width="128" height="128"></canvas>
+							  		<p class="weather_summary"><%= Weather.data[0].summary %></p>
+							  		<p><span id="min"><%= Weather.data[0].temperatureMin %>°C</span><span id="max"><%= Weather.data[0].temperatureMax %>°C</span></p>
+						  	</div>
+						  </div>
+						  <div class="row row-padding">
+						  	<h3 class="directions">Directions</h3>
+						  	<div class="col-md-6">
+						  		<div class="alert alert-info" role="alert">
+									  Simply change the mode of travel to get new directions from your location:
+									</div>
+						  	</div>
+						  	<div class="col-md-6">
+						  		<select class="form-control" id="mode">
+							      <option value="DRIVING">Driving</option>
+							      <option value="WALKING">Walking</option>
+							      <option value="BICYCLING">Bicycling</option>
+							      <option value="TRANSIT">Transit</option>
+							    </select>
+						  	</div>
+						  </div>
+						  	<div class="row row-padding">
+						  		<div class="col-md-12">
+						  			<h3>Check Uber Services</h3>
+						  			<form ng-submit="search()">
+						  				<div class="input-group">
+						  					<span class="input-group-addon" id="uber_search_addon">Pick up Location</span>
+									      <input type="text" ng-model="uberLookup.address" class="form-control" placeholder="Address" aria-describedby="basic-addon2">
+									      <input type="hidden" ng-model="uberLookup.endLat" ng-init="uberLookup.endLat='<%= eventLocation.latitude %>'">
+									      <input type="hidden" ng-model="uberLookup.endLong" ng-init="uberLookup.endLong='<%= eventLocation.longitude %>'">
+									      <span class="input-group-btn">
+									        <button class="btn btn-default" type="submit">Search</button>
+									      </span>
+									    </div><!-- /input-group -->
+										</form>
+						  		</div>
+						  	</div>
+						  	<div class="row search-result row-padding" ng-show="show">
+						  		<div class="col-md-12">
+						  			<table class="table table-hover">
+									  	<thead>
+								        <tr>
+								          <th>Service</th>
+								          <th>Estimated Cost to Destination</th>
+								          <th>Estimated Travel Time</th>
+								          <th>Distance</th>
+								        </tr>
+						      		</thead>
+						      		<tbody>
+								        <tr ng-repeat="product in searchResults.prices" id="{{ product.product_id }}">
+								          <td>{{ product.display_name }}</td>
+								          <td>{{ product.estimate }}</td>
+								          <td>{{ product.duration | secondsToMinutes }} Minutes</td>
+								          <td>{{ product.distance }} Km</td>
+								        </tr>
+						      		</tbody>
+									  </table>
+						  		</div>
+						  	</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<% include scripts %>
+		<script src="../public/js/skycons.js"></script>
+		<script>
+			var loadMap = function() 
+      {
+      	var selectedMode = document.getElementById('mode').value;
+      	if (navigator.geolocation) { //Checks if browser supports geolocation
+			   navigator.geolocation.getCurrentPosition(function (position) {                                                              
+			   	 // Gets the users current location.
+			     var latitude = position.coords.latitude;
+			     var longitude = position.coords.longitude;
+			     var coords = new google.maps.LatLng(latitude, longitude); // Creates variable for map coordinates
+			     var endCoords = new google.maps.LatLng(<%= eventLocation.latitude %>, <%= eventLocation.longitude %>)
+			     var directionsService = new google.maps.DirectionsService();
+			     var directionsDisplay = new google.maps.DirectionsRenderer();
+			     var mapOptions = // Sets map options
+			     {
+			       zoom: 14,  // Sets zoom level (0-21)
+			       center: coords, // Zoom in on users location
+			       mapTypeControl: true, // Allows you to select map type eg. map or satellite
+			       navigationControlOptions:
+			       {
+			         style: google.maps.NavigationControlStyle.SMALL // Sets map controls size eg. zoom
+			       },
+			       mapTypeId: google.maps.MapTypeId.ROADMAP // Sets type of map Options:ROADMAP, SATELLITE, HYBRID, TERRIAN
+			     };
+			     // Creates a new map using the passed optional parameters in the mapOptions parameter
+			     map = new google.maps.Map(document.getElementById("map"), mapOptions);
+			     directionsDisplay.setMap(map);
+			     directionsDisplay.setPanel(document.getElementById('panel'));
+			     var request = {
+			       origin: coords,
+			       destination: endCoords,
+			       travelMode: google.maps.DirectionsTravelMode[selectedMode]
+			     };
+
+			     directionsService.route(request, function (response, status) {
+			       if (status == google.maps.DirectionsStatus.OK) {
+			         directionsDisplay.setDirections(response);
+			       }
+			     });
+			   });
+			 }
+			}
+			// Event listener for direction mode changes
+			document.getElementById('mode').addEventListener('change', function() {
+		    loadMap();
+		  });
+
+	    window.onload= loadMap;
+	    // Changing start and end time to human readable format.
+	   	var start = new Date($('#startTime').html());
+	    var end = new Date($('#endTime').html());
+	    $('#startTime').html(start.toString());
+	    $('#endTime').html(end.toString());
+
+	    // Initialize animated weather icon.
+		  var skycons = new Skycons({"color": "#ccc"});
+		  skycons.add("weather_icon", "<%= Weather.data[0].icon %>");
+		  // start animation!
+		  skycons.play();
+		</script>
+	</body>
+	</html>
