@@ -40,7 +40,7 @@
 						  			<form ng-submit="search()">
 						  				<div class="input-group">
 						  					<span class="input-group-addon" id="uber_search_addon">Pick up Location</span>
-									      <input type="text" ng-model="uberLookup.address" class="form-control" placeholder="Address" aria-describedby="basic-addon2">
+									      <input type="text" ng-model="uberLookup.address" class="form-control" placeholder="Address" aria-describedby="basic-addon2" required>
 									      <input type="hidden" ng-model="uberLookup.endLat" ng-init="uberLookup.endLat='<%= eventLocation.latitude %>'">
 									      <input type="hidden" ng-model="uberLookup.endLong" ng-init="uberLookup.endLong='<%= eventLocation.longitude %>'">
 									      <span class="input-group-btn">

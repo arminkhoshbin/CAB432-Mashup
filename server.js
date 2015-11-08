@@ -17,7 +17,7 @@ var geocoder = require('node-geocoder')(geocoderProvider, httpAdapter. extra);
 // Google Calendar API initialization
 var GoogleCalendar = require('./Module/googleCalendar');
 var GoogleCalendarAPI = new GoogleCalendar();
-var GoogleCalendarOAuthClient = GoogleCalendarAPI.oauth(secret.GoogleCalendar);
+var GoogleCalendarOAuthClient;
 
 // Forecast.io API initialization
 var Forecast = require('./Module/forecast');
@@ -26,7 +26,7 @@ var ForecastAPI = new Forecast(secret.Forecastio.api_key);
 // Uber API initialization
 var UberAPI = require('./Module/uber');
 var Uber = new UberAPI();
-var uber = Uber.init(secret.Uber);
+var uber;
 
 var app = express();
 
@@ -49,6 +49,8 @@ app.use('/public', express.static('public'));
 
 // Handles Authentication to endpoints
 function requireAuthentication(req, res, next) {
+	secret.GoogleCalendar.redirect_uris[0] = 'http://' + req.headers.host + '/login';
+	secret.Uber.redirect_uri = 'http://' + req.headers.host + '/login';
   if (req.session.loggedIn) {
     next();
   } else {
@@ -85,15 +87,16 @@ app.get('/uber/services', requireAuthentication, function(req, res) {
 			  callback();
 			});
 		},
-		], function(err) { 
+		], function(err) {
         if (err) return next(err);
         res.send(result);
   });
-
 });
 
 // Handles Google Authentication and setting session
 app.get('/login', function(req, res) {
+	GoogleCalendarOAuthClient = GoogleCalendarAPI.oauth(secret.GoogleCalendar);
+	uber = Uber.init(secret.Uber);
 	if (req.query.hasOwnProperty('code')) {
 		GoogleCalendarAPI.generateToken(GoogleCalendarOAuthClient, req.query.code, function(err, data) {
 			var token = data;
@@ -156,10 +159,6 @@ app.get('/event/:id', requireAuthentication, function(req, res) {
   });
 });
 
-// This end point is for test purposes only
-app.get('/session/set', function(req, res) {
-	req.session.loggedIn = true;
-});
 
 // Starting the server
 var server = app.listen(3000, function () {
@@ -169,4 +168,5 @@ var server = app.listen(3000, function () {
   console.log('Example app listening at http://localhost:3000');
 });
 
+// export the app for test purposes
 module.exports = app;

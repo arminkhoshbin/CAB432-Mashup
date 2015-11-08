@@ -6,7 +6,16 @@ module.exports = {
 		"auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
 		"client_secret": "CLIENT_SECRET",
 		"redirect_uris": [
-			"http://localhost:3000/login"
-		]
-	}
+			"",
+		],
+	},
+	"Forecastio" : {
+		"api_key": "API_KEY",
+	},
+	"Uber" : {
+		"client_id": "CLIENT_ID",
+		"client_secret": "CLIENT_SECRET",
+		"server_token": "SERVER_TOKEN",
+		"redirect_uri": "",
+	},
 }
